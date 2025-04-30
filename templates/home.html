@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <h1 class="profile-header">Профиль пользователя</h1>
+    
+    <div class="user-section">
+        <h2>Основная информация</h2>
+        <div class="user-info">
+            <div class="info-item">
+                <span class="info-label">Имя пользователя:</span>
+                <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Имя:</span>
+                <span class="info-value">{{ user.first_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Фамилия:</span>
+                <span class="info-value">{{ user.last_name }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Номер телефона:</span>
+                <span class="info-value">{{ user.profile.phone }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Последний вход:</span>
+                <span class="info-value">{{ user.last_login }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="keycloak-section">
+        <h2>Данные из Keycloak</h2>
+        <div class="keycloak-info">
+            <div class="info-item">
+                <span class="info-label">Администратор:</span>
+                <span class="info-value">{{ user.is_superuser }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ID в Keycloak:</span>
+                <span class="info-value">{{ user.sub }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Email подтвержден:</span>
+                <span class="info-value">{{ social_data.email_verified|yesno:"Да,Нет" }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Дата создания аккаунта:</span>
+                <span class="info-value">{{ social_data.created_ts|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="session-info">
+        <h2>Сессия</h2>
+        <div class="session-data">
+            <div class="info-item">
+                <span class="info-label">ID сессии:</span>
+                <span class="info-value">{{ social_data.sid }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Срок действия токена:</span>
+                <span class="info-value">{{ social_data.exp }} ({{ social_data.exp|timeuntil }})</span>
+            </div>
+        </div>
+    </div>
+
+    <a href="{% url 'logout' %}" class="logout-btn">Выйти</a>
+</div>
+
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .profile-header {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 1rem;
+    }
+
+    .user-section, .keycloak-section, .session-info {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #34495e;
+        min-width: 200px;
+    }
+
+    .info-value {
+        color: #7f8c8d;
+        word-break: break-word;
+        text-align: right;
+    }
+
+    .roles-list {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .role-badge {
+        background: #3498db;
+        color: white;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.9em;
+    }
+
+    .logout-btn {
+        display: block;
+        width: 100%;
+        padding: 1rem;
+        background: #e74c3c;
+        color: white;
+        text-align: center;
+        border-radius: 5px;
+        margin-top: 2rem;
+        text-decoration: none;
+        transition: background 0.3s;
+    }
+
+    .logout-btn:hover {
+        background: #c0392b;
+    }
+</style>
+{% endblock %}

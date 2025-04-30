@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django
+  template:
+    metadata:
+      labels:
+        app: django
+    spec:
+      containers:
+        - name: django
+          image: autoserviceadm/automaster:v6.0
+          envFrom:
+            - secretRef:
+                name: django-secrets
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: media-data
+              mountPath: /code/media
+      volumes:
+        - name: media-data
+          persistentVolumeClaim:
+            claimName: django-media

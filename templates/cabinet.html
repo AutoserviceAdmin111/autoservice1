@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2>Личный кабинет</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.first_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.last_name|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.patronymic|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.phone|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" 
+                               value="{{ user.email }}" 
+                               class="form-control" 
+                               disabled>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="bi bi-save"></i> Сохранить изменения
+            </button>
+        </form>
+
+        <h4 class="mt-5">Мои заявки</h4>
+        <div class="table-responsive">
+            <table class="table">
+                {% for app in user.appointment_set.all %}
+                <tr>
+                    <td>{{ app.date|date:"d.m.Y H:i" }}</td>
+                    <td>{{ app.get_status_display }}</td>
+                    <td>{{ app.problem|truncatechars:50 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">У вас пока нет активных заявок</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

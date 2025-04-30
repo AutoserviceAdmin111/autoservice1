@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Авторизация</h2>
+  <a href="{% url 'social:begin' 'keycloak' %}">Войти через Keycloak</a>
+{% endblock %}
