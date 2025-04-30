@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-push-update:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -37,7 +38,7 @@ jobs:
           MANIFEST_FILE="k8s/django/deployment.yaml"
           sed -i "s|image: .*|image: ${DOCKERHUB_USERNAME}/autoservice1:${SHORT_SHA}|g" $MANIFEST_FILE
           cat $MANIFEST_FILE
-      
+
       - name: Commit and push changes
         env:
           PAT: ${{ secrets.PAT }}
