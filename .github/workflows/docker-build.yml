@@ -27,18 +27,14 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/имярепо:${{ env.SHORT_SHA }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/autoservice1:${{ env.SHORT_SHA }}
 
       - name: Update ArgoCD manifest
         run: |
-          # Замените путь к манифесту на ваш
           MANIFEST_FILE="k8s/django/deployment.yaml"
           
-          # Обновляем тег в манифесте (предполагается, что в манифесте есть строка с image)
-          # Пример замены регулярным выражением для поля image
-          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/имярепо:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/имярепо:${{ env.SHORT_SHA }}|g" $MANIFEST_FILE
-          
-          # Проверяем, что изменения применились
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/autoservice1:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/autoservice1:${{ env.SHORT_SHA }}|g" $MANIFEST_FILE
+
           cat $MANIFEST_FILE
 
       - name: Commit and push changes
