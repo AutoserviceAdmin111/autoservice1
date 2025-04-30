@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: django
-          image: autoserviceadm/autoservice1:3d9b42c
+          image: autoserviceadm/autoservice1:c0f3aa2
           envFrom:
             - secretRef:
                 name: django-secrets
