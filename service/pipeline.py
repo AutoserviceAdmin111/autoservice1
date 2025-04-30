@@ -1,1 +1,118 @@
-from .models import UserProfileimport datetimedef save_roles(user, response, *args, **kwargs):    sub = response.get('sub')    print(f"[DEBUG] Keycloak SUB: {sub} | Django User ID: {user.id}")        if not user.pk:        user.save()    profile, created = UserProfile.objects.get_or_create(user=user)    print(f"[DEBUG] Profile created: {created}")    roles = response.get('realm_access', {}).get('roles', [])    profile.roles = ', '.join(roles)    profile.save()    user.is_staff = 'admin' in roles    user.is_superuser = 'admin' in roles    user.save()def save_additional_data(user, response, *args, **kwargs):    profile, created = UserProfile.objects.get_or_create(user=user)        # Устанавливаем sid или пустую строку, если его нет    profile.sid = response.get('sid', '')          # Остальные поля    profile.sub = response.get('sub', '')    profile.email_verified = response.get('email_verified', False)        # Обработка created_ts    created_ts = response.get('created_ts')    if created_ts:        profile.created_ts = datetime.datetime.fromtimestamp(int(created_ts))    profile.save()def debug_auth(response, *args, **kwargs):    print(f"[Keycloak] Ответ: {response}")    return {}# pipelines.pyfrom social_core.pipeline.social_auth import social_user as original_social_userdef social_user(backend, uid, user=None, *args, **kwargs):    print(f"[SOCIAL_USER] UID: {uid}")  # Должен совпадать с sub из Keycloak    return original_social_user(backend, uid, user, *args, **kwargs)def debug_social_uid(backend, details, response, *args, **kwargs):    print(f"[DEBUG] Keycloak Response UID (sub): {response.get('sub')}")    return {'uid': response.get('sub')}from django.contrib.auth.models import User#def save_keycloak_data(user, response, *args, **kwargs):#    # Сохраняем данные напрямую в модель User#    print(response)#    user.username = response.get('preferred_username', '')#    user.email = response.get('email', '')#    user.first_name = response.get('given_name', '')#    user.last_name = response.get('family_name', '')#    user.phone = response.get('phone')#    user.patronymic = response.get('patronymic')#    # Сохраняем роли в поле password (как пример, или создайте кастомное поле)#    roles = ','.join(response.get('realm_access', {}).get('roles', []))#    user.password = roles  # Пароль не используется, поле можно заюзать для данных#    #    user.save()#    #    # Делаем админом, если есть роль#    user.is_staff = 'admin' in roles#    user.is_superuser = 'admin' in roles#    user.save()def save_keycloak_data(strategy, user, response, **kwargs):    user.username = f"{response['preferred_username']}"     user.email = response.get('email', '')    user.first_name = response.get('given_name', '')    user.last_name = response.get('family_name', '')    user.save()    # Получаем роли из Keycloak    roles = response.get('realm_access', {}).get('roles', [])    is_admin = 'admin' in roles        # Устанавливаем права администратора    user.is_staff = is_admin    user.is_superuser = is_admin    user.save()    # Создаем профиль, если не существует    profile, created = UserProfile.objects.get_or_create(        sub=response['sub'],  # Ключевое изменение: ищем по sub        defaults={            'user': user,            'phone': response.get('phone', ''),            'patronymic': response.get('patronymic', ''),        }    )    # Если профиль уже существовал, обновляем поля    if not created:        profile.user = user        profile.phone = response.get('phone', profile.phone)        profile.patronymic = response.get('patronymic', profile.patronymic)        profile.save()    return {'user': user}def get_keycloak_sub(strategy, details, backend, response, *args, **kwargs):    print("asdasdasd" + str(response))    return {        'sub': response.get('sub'),        'uid': response.get('sub')  # Используем sub как UID    }
+from .models import UserProfile
+import datetime
+
+def save_roles(user, response, *args, **kwargs):
+    sub = response.get('sub')
+    print(f"[DEBUG] Keycloak SUB: {sub} | Django User ID: {user.id}")
+    
+    if not user.pk:
+        user.save()
+
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    print(f"[DEBUG] Profile created: {created}")
+
+    roles = response.get('realm_access', {}).get('roles', [])
+    profile.roles = ', '.join(roles)
+    profile.save()
+
+    user.is_staff = 'admin' in roles
+    user.is_superuser = 'admin' in roles
+    user.save()
+
+def save_additional_data(user, response, *args, **kwargs):
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    
+    # Устанавливаем sid или пустую строку, если его нет
+    profile.sid = response.get('sid', '')  
+    
+    # Остальные поля
+    profile.sub = response.get('sub', '')
+    profile.email_verified = response.get('email_verified', False)
+    
+    # Обработка created_ts
+    created_ts = response.get('created_ts')
+    if created_ts:
+        profile.created_ts = datetime.datetime.fromtimestamp(int(created_ts))
+    profile.save()
+
+
+def debug_auth(response, *args, **kwargs):
+    print(f"[Keycloak] Ответ: {response}")
+    return {}
+
+# pipelines.py
+from social_core.pipeline.social_auth import social_user as original_social_user
+
+def social_user(backend, uid, user=None, *args, **kwargs):
+    print(f"[SOCIAL_USER] UID: {uid}")  # Должен совпадать с sub из Keycloak
+    return original_social_user(backend, uid, user, *args, **kwargs)
+
+def debug_social_uid(backend, details, response, *args, **kwargs):
+    print(f"[DEBUG] Keycloak Response UID (sub): {response.get('sub')}")
+    return {'uid': response.get('sub')}
+
+from django.contrib.auth.models import User
+
+#def save_keycloak_data(user, response, *args, **kwargs):
+#    # Сохраняем данные напрямую в модель User
+#    print(response)
+#    user.username = response.get('preferred_username', '')
+#    user.email = response.get('email', '')
+#    user.first_name = response.get('given_name', '')
+#    user.last_name = response.get('family_name', '')
+#    user.phone = response.get('phone')
+#    user.patronymic = response.get('patronymic')
+#    # Сохраняем роли в поле password (как пример, или создайте кастомное поле)
+#    roles = ','.join(response.get('realm_access', {}).get('roles', []))
+#    user.password = roles  # Пароль не используется, поле можно заюзать для данных
+#    
+#    user.save()
+#    
+#    # Делаем админом, если есть роль
+#    user.is_staff = 'admin' in roles
+#    user.is_superuser = 'admin' in roles
+#    user.save()
+
+
+def save_keycloak_data(strategy, user, response, **kwargs):
+    user.username = f"{response['preferred_username']}" 
+    user.email = response.get('email', '')
+    user.first_name = response.get('given_name', '')
+    user.last_name = response.get('family_name', '')
+    user.save()
+
+    # Получаем роли из Keycloak
+    roles = response.get('realm_access', {}).get('roles', [])
+    is_admin = 'admin' in roles
+    
+    # Устанавливаем права администратора
+    user.is_staff = is_admin
+    user.is_superuser = is_admin
+    user.save()
+
+    # Создаем профиль, если не существует
+    profile, created = UserProfile.objects.get_or_create(
+        sub=response['sub'],  # Ключевое изменение: ищем по sub
+        defaults={
+            'user': user,
+            'phone': response.get('phone', ''),
+            'patronymic': response.get('patronymic', ''),
+        }
+    )
+
+    # Если профиль уже существовал, обновляем поля
+    if not created:
+        profile.user = user
+        profile.phone = response.get('phone', profile.phone)
+        profile.patronymic = response.get('patronymic', profile.patronymic)
+        profile.save()
+
+    return {'user': user}
+
+
+def get_keycloak_sub(strategy, details, backend, response, *args, **kwargs):
+    print("asdasdasd" + str(response))
+    return {
+        'sub': response.get('sub'),
+        'uid': response.get('sub')  # Используем sub как UID
+    }

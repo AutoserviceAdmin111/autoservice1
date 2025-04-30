@@ -1,1 +1,47 @@
-from django.shortcuts import redirectimport logginglogger = logging.getLogger(__name__)class KeycloakAuthMiddleware:    """    Middleware для принудительной аутентификации через Keycloak    Исключает основные пути из проверки авторизации    """        # Пути, которые не требуют аутентификации    excluded_paths = [        '/login/',       # Страница входа        '/logout/',      # Выход        '/oauth/',       # OAuth endpoints        '/admin/',       # Админка (если нужен доступ)        '/static/',      # Статические файлы        '/favicon.ico',  # Иконка сайта        '/healthcheck/', # Эндпоинт для проверки здоровья        '/error/'        # Страница ошибок    ]    def __init__(self, get_response):        self.get_response = get_response    def __call__(self, request):        # Получаем путь без trailing slash        path = request.path_info.rstrip('/')                # Логируем запрос для отладки        logger.debug(f"Processing request to: {path}")                # Проверяем исключения        if any(path.startswith(p.rstrip('/')) for p in self.excluded_paths):            logger.debug(f"Bypassing auth for: {path}")            return self.get_response(request)                    # Проверка аутентификации        if not request.user.is_authenticated:            logger.warning(f"Unauthenticated access to: {path}")            next_url = request.get_full_path()            return redirect(f'/login/?next={next_url}')                    # Для авторизованных пользователей        logger.debug(f"Authenticated access to: {path}")        return self.get_response(request)
+from django.shortcuts import redirect
+import logging
+
+logger = logging.getLogger(__name__)
+
+class KeycloakAuthMiddleware:
+    """
+    Middleware для принудительной аутентификации через Keycloak
+    Исключает основные пути из проверки авторизации
+    """
+    
+    # Пути, которые не требуют аутентификации
+    excluded_paths = [
+        '/login/',       # Страница входа
+        '/logout/',      # Выход
+        '/oauth/',       # OAuth endpoints
+        '/admin/',       # Админка (если нужен доступ)
+        '/static/',      # Статические файлы
+        '/favicon.ico',  # Иконка сайта
+        '/healthcheck/', # Эндпоинт для проверки здоровья
+        '/error/'        # Страница ошибок
+    ]
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Получаем путь без trailing slash
+        path = request.path_info.rstrip('/')
+        
+        # Логируем запрос для отладки
+        logger.debug(f"Processing request to: {path}")
+        
+        # Проверяем исключения
+        if any(path.startswith(p.rstrip('/')) for p in self.excluded_paths):
+            logger.debug(f"Bypassing auth for: {path}")
+            return self.get_response(request)
+            
+        # Проверка аутентификации
+        if not request.user.is_authenticated:
+            logger.warning(f"Unauthenticated access to: {path}")
+            next_url = request.get_full_path()
+            return redirect(f'/login/?next={next_url}')
+            
+        # Для авторизованных пользователей
+        logger.debug(f"Authenticated access to: {path}")
+        return self.get_response(request)

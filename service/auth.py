@@ -1,1 +1,21 @@
-from social_core.backends.oauth import OAuth2Authfrom social_core.utils import generate_code_verifier, generate_code_challengeclass KeycloakOAuth2PKCE(OAuth2Auth):    name = 'keycloak-pkce'        def auth_params(self, state=None):        params = super().auth_params(state)        code_verifier = generate_code_verifier()        params.update({            'code_challenge': generate_code_challenge(code_verifier, 'S256'),            'code_challenge_method': 'S256'        })        self.strategy.session_set('code_verifier', code_verifier)        return params# settings.pyAUTHENTICATION_BACKENDS = (    'service.auth.KeycloakOAuth2PKCE',    'django.contrib.auth.backends.ModelBackend',)
+from social_core.backends.oauth import OAuth2Auth
+from social_core.utils import generate_code_verifier, generate_code_challenge
+
+class KeycloakOAuth2PKCE(OAuth2Auth):
+    name = 'keycloak-pkce'
+    
+    def auth_params(self, state=None):
+        params = super().auth_params(state)
+        code_verifier = generate_code_verifier()
+        params.update({
+            'code_challenge': generate_code_challenge(code_verifier, 'S256'),
+            'code_challenge_method': 'S256'
+        })
+        self.strategy.session_set('code_verifier', code_verifier)
+        return params
+
+# settings.py
+AUTHENTICATION_BACKENDS = (
+    'service.auth.KeycloakOAuth2PKCE',
+    'django.contrib.auth.backends.ModelBackend',
+)
